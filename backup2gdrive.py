@@ -37,6 +37,7 @@ BS = 16
 pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS) 
 unpad = lambda s : s[:-ord(s[len(s)-1:])]
 
+# Encrypt then HMAC the data with AES/HMAC-SHA256
 def encrypt(data, crypto_pass):
 	crypto_pass = SHA256.new(crypto_pass.encode()).digest()
 	data = pad(data)
@@ -46,6 +47,7 @@ def encrypt(data, crypto_pass):
 	mac = HMAC.new(crypto_pass, enc, SHA256.new(crypto_pass)).digest()
 	return (mac+enc)
 
+# Try to decrypt data encrypted with "encrypt". Will exit on failure!
 def decrypt(data, crypto_pass):
 	crypto_pass = SHA256.new(crypto_pass.encode()).digest()
 	hmac = HMAC.new(crypto_pass, None, SHA256.new(crypto_pass))
@@ -57,7 +59,8 @@ def decrypt(data, crypto_pass):
 		sys.exit(1) 
 	cipher = AES.new(crypto_pass, AES.MODE_CBC, data[:16] )
     	return unpad(cipher.decrypt( data[16:] ))
-	
+
+# Write our Google Drive credentials in a file
 def store_credentials(creds, crypto_pass):
 	encrypted_oauth_file = open(ENCRYPTED_OAUTH_TOKEN,'w')
 	data = creds.to_json()
@@ -65,6 +68,7 @@ def store_credentials(creds, crypto_pass):
         encrypted_oauth_file.write(data)
         encrypted_oauth_file.close()
 
+# Read our Google Drive credentials from a file
 def read_credentials(crypto_pass):
     encrypted_oauth_file = open(ENCRYPTED_OAUTH_TOKEN,'r')
     encrypted_oauth = encrypted_oauth_file.read()
@@ -72,6 +76,7 @@ def read_credentials(crypto_pass):
     oauth = decrypt(encrypted_oauth, crypto_pass)
     return oauth2client.client.Credentials.new_from_json(oauth)
 
+# mkdir and ignore error if folder already exists.
 def mkdir_ignore(path):
     try:
         os.mkdir(path)
@@ -132,6 +137,7 @@ def retrieve_all_files(service, q=""):
       break
   return result
 
+# Send encrypted local file/folder to Google drive, inside remote folder with id "parent_id"
 def backup(path, parent_id):
     if os.path.isfile(path):
         # TODO: Delete remote files with same name if they already exist. Or somehow set a property to only erase our own old backups, not user files
@@ -161,6 +167,7 @@ def backup(path, parent_id):
         print('Invalid path: "'+path+'", aborting')
         sys.exit(1)
 
+# Fetch and decrypt remote file/folder "filepath", assuming that "parent_id" is the id of remote folder "folderpath"
 def restore(folderpath, filepath, parent_id):
     #print("Restoring "+filepath)
     filepath = filepath.rstrip(os.sep)
@@ -217,7 +224,7 @@ def restore(folderpath, filepath, parent_id):
 
 ########################## MAIN LOGIC
 
-# Parse args
+# Parse our args, process -h and -c directly, then keep going if we need to backup/restore
 backuppath = ""
 restorepath = ""
 try:
@@ -240,7 +247,6 @@ for opt, arg in opts:
         except:
             pass
         sys.exit(0)
-
 if backuppath == "" and restorepath == "":
     print 'backup2gdrive.py [-h] [-b, --backup <localpath>] [-r, --restore <remotepath>]'
     sys.exit(0)
@@ -275,16 +281,13 @@ if len(files) == 0:
 else:
     bakdir = files[0]
 
-# TODO: Ask whether we want to backup or to restore
-# In both cases we take a path to a file/folder and transfer all of it
-# For now if we try to backup a file that already exists, overwrite it. Later learn to check the last modified times
-
+# Backup ?
 if backuppath != "":
     print('Backing up "'+backuppath+'"')
     backup(backuppath, bakdir['id'])
 
+# Restore ?
 if restorepath != "":
     print('Restoring "'+restorepath+'" in "'+RESTORE_PREFIX+'"')
     mkdir_ignore(RESTORE_PREFIX)
     restore("", restorepath, bakdir['id'])
-    
