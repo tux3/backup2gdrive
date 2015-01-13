@@ -27,14 +27,6 @@ OAUTH2_SCOPE = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRETS = 'client_secrets.json'
 ENCRYPTED_OAUTH_TOKEN = 'client_oauth.dat'
 
-# Path to the file to upload.
-FILENAME = 'document.txt'
-
-# Metadata about the file.
-MIMETYPE = 'text/plain'
-TITLE = 'My New Text Document'
-DESCRIPTION = 'A shiny new text document about hello world.'
-
 # Where to put restored files
 RESTORE_PREFIX = 'restored'
 
