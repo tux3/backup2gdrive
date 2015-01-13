@@ -18,7 +18,7 @@ Options:
   -r, --restore <remotepath>: Downloads and decrypts <remotepath> from Google Drive. Can be a file or folder.
 </pre>
 
-
+<h5>Boring details</h5>
 Uploaded files are stored in a folder called "backup" in Google Drive, and will overwrite any previous files with the same name so don't use this script if you already have a folder called "backup" with important things inside... 
 Restored files are downloaded to "./restored/", and will also overwrite any previous files with the same name.
 You will need to grant full Google Drive permissions to the script on first run on the target account, this requires a web browser. The credentials are stored encrypted on disk after first use, with the same encryption used for the files.
